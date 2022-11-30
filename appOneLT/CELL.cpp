@@ -25,7 +25,7 @@ void CELL::draw()
     colorMode(HSV,100);
     angleMode(DEGREES);
     float satu = 100; float value = 80;
-    if      (status == NO_CHECK) fill(0,0,50);
+    if      (status == NO_CHECK) fill(0,0,30);
     else if (status == CLOSED) fill(-10, satu, 50);
     else if (status == OPENED) fill(80, satu, value);
     else if (status == OBSTACLE) fill(0,satu,0);
@@ -38,7 +38,7 @@ void CELL::draw()
         fill(255);
         textSize(w/3);
         textMode(BCENTER);
-        int px = w * x + 20;
+        int px = w * x + w/5;
         int py = h * y + h / 2;
         text(cost, px, py - w/6);
         text(score, px, py + w/6);
@@ -54,6 +54,6 @@ void CELL::drawPathLine(DIR* dir)
         int ey = y * h + h / 2;
         int sx = ex + dir[parentDirIdx].x * w;
         int sy = ey + dir[parentDirIdx].y * h;
-        arrow(sx, sy, ex, ey);
+        arrow(sx, sy, ex, ey, w / 3);
     }
 }
