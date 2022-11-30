@@ -37,7 +37,12 @@ int MapData[100] = {
 };
 
 //functions
-
+void setRandomPos(int& x, int& y) {
+    do {
+        x = random() % Cols;
+        y = random() % Rows;
+    } while (Cells[x + y * Cols].status == OBSTACLE);
+}
 //セルデータ初期設定（リセット時にも呼び出される）
 void setCells() 
 {
@@ -57,11 +62,9 @@ void setCells()
         }
     }
 
-    Sx = random()%Cols;
-    Sy = random()%Rows;
+    setRandomPos(Sx, Sy);
     Cells[Sx + Sy * Cols].status = OPENED;
-    Gx = random()%Cols;
-    Gy = random()%Rows;
+    setRandomPos(Gx, Gy);
 }
 void create()
 {
@@ -74,6 +77,8 @@ void create()
             Cells[x + y * Cols].set(x, y, W, H);
         }
     }
+
+    setCells();
 }
 
 //ゴールまでの最短距離の２乗を求める
@@ -82,6 +87,7 @@ int huristic(int fromX, int fromY, int toX, int toY) {
     int x = toX - fromX;
     int y = toY - fromY;
     return x * x + y * y;
+    //return Abs(x) + Abs(y);
 }
 
 //ゴールから遡って、通り道のstatusにPATHを設定していく（再帰呼び出し）
@@ -94,8 +100,6 @@ void traceRoute(int x, int y) {
 
     int i = Cells[x + y * Cols].parentDirIdx;
     traceRoute(x + Dir[i].x, y + Dir[i].y);
-
-    return;
 }
 
 //ゴールまでのパス探索を１ステップのみ行う
@@ -174,7 +178,7 @@ void drawCells() {
         }
     }
     //スタート、ゴール文字表示
-    fill(0, 0, 100);
+    fill(60, 100, 100);
     textSize(W/2);
     text("S", Sx * W + W / 2, Sy * H + H / 2);
     text("G", Gx * W + W / 2, Gy * H + H / 2);
@@ -187,8 +191,8 @@ void gmain()
 	while (notQuit)
 	{
         if (isTrigger(KEY_W))setCells();
-        if (isTrigger(KEY_D))searchStep();
-        if (isTrigger(KEY_A))searchLoop();
+        if (!DoneFlag && isTrigger(KEY_D))searchStep();
+        if (!DoneFlag && isTrigger(KEY_A))searchLoop();
         if(DrawFlag)drawCells();
         DrawFlag = 0;
 	}
