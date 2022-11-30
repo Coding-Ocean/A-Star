@@ -21,5 +21,5 @@ public:
     CELL();
     void set(int x, int y, int w, int h);
     void draw();
-    void drawPathLine(DIR* dir);
+    //void drawPathLine(DIR* dir);
 };

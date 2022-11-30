@@ -29,7 +29,7 @@ void CELL::draw()
     else if (status == CLOSED) fill(-10, satu, 50);
     else if (status == OPENED) fill(80, satu, value);
     else if (status == OBSTACLE) fill(0,satu,0);
-    else if (status == PATH) fill(-10, satu, 50); //fill(50, satu, value);
+    //else if (status == PATH) fill(-10, satu, 50); //fill(50, satu, value);
     noStroke();
     rect(w * x, h * y, w - 1, h - 1);
     //info
@@ -45,15 +45,15 @@ void CELL::draw()
     }
 }
 
-void CELL::drawPathLine(DIR* dir) 
-{
-    if (status == PATH) {
-        strokeWeight(5);
-        stroke(330, 80, 100);
-        int ex = x * w + w / 2;
-        int ey = y * h + h / 2;
-        int sx = ex + dir[parentDirIdx].x * w;
-        int sy = ey + dir[parentDirIdx].y * h;
-        arrow(sx, sy, ex, ey);
-    }
-}
+//void CELL::drawPathLine(DIR* dir) 
+//{
+//    if (status == PATH) {
+//        strokeWeight(5);
+//        stroke(330, 80, 100);
+//        int ex = x * w + w / 2;
+//        int ey = y * h + h / 2;
+//        int sx = ex + dir[parentDirIdx].x * w;
+//        int sy = ey + dir[parentDirIdx].y * h;
+//        arrow(sx, sy, ex, ey);
+//    }
+//}

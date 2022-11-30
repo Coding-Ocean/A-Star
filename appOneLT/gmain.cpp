@@ -5,20 +5,15 @@ int Cols = 10;
 int Rows = 10;
 int W; //セルの横幅
 int H; //セルの高さ
-int Sx=-1; //スタートセル
-int Sy=-1;
-int Gx=-1; //ゴールセル
-int Gy=-1;
+int Sx=0; //スタートセル
+int Sy=0;
+int Gx=0; //ゴールセル
+int Gy=0;
 CELL* Cells = 0;
 
-DIR Dir[8] = {
-    {0,-1},{0,1},{-1,0},{1,0},//上下左右
-    {0,1},{0,-1},{1,0},{-1,0},//反対方向
+DIR Dir[4] = {
+    {0,-1},{1,0},{0,1},{-1,0}//上右下左
 };
-
-int Button;
-int ButtonStep;
-int ButtonReset;
 
 int DoneFlag;
 int DrawFlag;
@@ -35,6 +30,7 @@ int MapData[100] = {
     0, 1, 0, 0, 0, 0, 1, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 };
+DIR Path[100];//要素数テキトー！
 
 //functions
 void setRandomPos(int& x, int& y) {
@@ -65,6 +61,11 @@ void setCells()
     setRandomPos(Sx, Sy);
     Cells[Sx + Sy * Cols].status = OPENED;
     setRandomPos(Gx, Gy);
+
+    for (int i = 0; i < 100; i++) {
+        Path[i].x = 5;
+        Path[i].y = 5;
+    }
 }
 void create()
 {
@@ -87,23 +88,25 @@ int huristic(int fromX, int fromY, int toX, int toY) {
     int x = toX - fromX;
     int y = toY - fromY;
     return x * x + y * y;
-    //return Abs(x) + Abs(y);
 }
 
-//ゴールから遡って、通り道のstatusにPATHを設定していく（再帰呼び出し）
+//ゴールから遡って、PATHを設定していく（再帰呼び出し）
 void traceRoute(int x, int y) {
-    Cells[x + y * Cols].status = PATH;
-
     if (x == Sx && y == Sy) {
         return;
     }
 
+    int idx = Cells[x + y * Cols].cost-1;
     int i = Cells[x + y * Cols].parentDirIdx;
+
+    Path[idx].x = -Dir[i].x;
+    Path[idx].y = -Dir[i].y;
+
     traceRoute(x + Dir[i].x, y + Dir[i].y);
 }
 
 //ゴールまでのパス探索を１ステップのみ行う
-//これが所謂エースターアルゴリズムの心臓部
+//これが所謂エイスターアルゴリズムの心臓部
 int searchStep() 
 {
     DrawFlag = 1;
@@ -120,16 +123,12 @@ int searchStep()
     }
     //オープンセルが無ければ通り道はないので終了
     if (minIdx == -1) {
-        print("no solution");
-        //noLoop();
         return 2;
     }
     //最小セルがゴールなら終了
     if (Cells[minIdx].x == Gx && Cells[minIdx].y == Gy) {
         traceRoute(Gx, Gy);
         DoneFlag = true;
-        print("done");
-        //noLoop();
         return 1;
     }
     //まず最小スコアのセルをクローズ状態にしてしまう
@@ -152,7 +151,7 @@ int searchStep()
         if (ncell.status == NO_CHECK) {
             ncell.cost = ncost;
             ncell.score = ncost + huristic(nx, ny, Gx, Gy);
-            ncell.parentDirIdx = (i + 4);
+            ncell.parentDirIdx = (i + 2)%4;//Dir[i]の逆ベクトルのインデックス
             ncell.status = OPENED;
         }
     }
@@ -164,6 +163,23 @@ void searchLoop() {
     while (searchStep() == 0);
 }
 
+void drawPathLine()
+{
+    strokeWeight(5);
+    stroke(330, 80, 100);
+
+    int sx = Sx*W + W / 2;
+    int sy = Sy*H + H / 2;
+    for(int i=0; Path[i].x!=5; i++)
+    {
+        int ex = sx + Path[i].x * W;
+        int ey = sy + Path[i].y * H;
+        arrow(sx, sy, ex, ey);
+        sx = ex;
+        sy = ey;
+    }
+}
+
 void drawCells() {
     clear();
     //セル表示
@@ -172,16 +188,21 @@ void drawCells() {
     }
     //検索が終了したらパスラインを表示
     if (DoneFlag) {
-        int s = Sx + Sy * Cols;
-        for (int i = 0; i < W * H; i++) {
-            if (i != s) Cells[i].drawPathLine(Dir);
-        }
+        drawPathLine();
+        //int s = Sx + Sy * Cols;
+        //for (int i = 0; i < W * H; i++) {
+        //    if (i != s) Cells[i].drawPathLine(Dir);
+        //}
     }
     //スタート、ゴール文字表示
     fill(60, 100, 100);
     textSize(W/2);
     text("S", Sx * W + W / 2, Sy * H + H / 2);
     text("G", Gx * W + W / 2, Gy * H + H / 2);
+
+    //for (int i = 0; i < 10; i++) {
+    //    text((let)""+Path[i].x+" "+Path[i].y,W/2,i*W/2+W/2);
+    //}
 }
 void gmain()
 {
