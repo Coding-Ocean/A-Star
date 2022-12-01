@@ -151,6 +151,7 @@
   <ItemGroup>
     <ClCompile Include="CELL.cpp" />
     <ClCompile Include="gmain.cpp" />
+    <ClCompile Include="PATH_FINDER.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />
@@ -160,6 +161,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CELL.h" />
+    <ClInclude Include="PATH_FINDER.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

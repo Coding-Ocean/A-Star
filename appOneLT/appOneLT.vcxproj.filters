@@ -9,6 +9,7 @@
   <ItemGroup>
     <ClCompile Include="gmain.cpp" />
     <ClCompile Include="CELL.cpp" />
+    <ClCompile Include="PATH_FINDER.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc">
@@ -22,5 +23,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CELL.h" />
+    <ClInclude Include="PATH_FINDER.h" />
   </ItemGroup>
 </Project>
