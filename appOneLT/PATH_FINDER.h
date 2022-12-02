@@ -2,14 +2,13 @@
 struct DIR {
     int x, y;
 };
+
 class PAHT_FINDER
 {
 private:
     DIR Dir[4] = {
         {0,-1},{1,0},{0,1},{-1,0}//上右下左
     };
-    DIR PathDir[100];//要素数テキトー！
-    int PathDirLength=0;
 
     class CELL* Cells = 0;
     int Cols = 10;
@@ -21,13 +20,17 @@ private:
     int Gx = 0; //ゴールセル
     int Gy = 0;
 
+    DIR* PathDir;
+    int* PathDirLength;
+    int Idx;
+
     int DoneFlag=0;
     int DrawFlag=1;
 
 public:
     void create();
     //セルデータ初期設定（リセット時にも呼び出される）
-    void setCells(int* mapData, int sx, int sy, int gx, int gy);
+    void setCells(int const* mapData, int sx, int sy, int gx, int gy, DIR* pathDir, int *pathDirLength);
     void setRandomPos(int& x, int& y);
     //ゴールまでのパスを探す
     void searchLoop();

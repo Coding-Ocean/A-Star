@@ -5,14 +5,15 @@ const int CLOSED = 2;
 const int OBSTACLE = 3;
 class CELL {
 public:
-    int Col;
-    int Row;
-    int Status;
-    int Cost;
-    int Score;
-    int ParentDirIdx;
+    int x;
+    int y;
+    int status;
+    int cost;
+    int heuristic;
+    int score;
+    int parentDirIdx;
 
-    void create(int col, int row);
+    void create(int x, int y);
     void init(int mapData);
     void draw(int sideLen);
     void drawMinimal(int sideLen);

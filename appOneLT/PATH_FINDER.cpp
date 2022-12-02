@@ -15,7 +15,7 @@ void PAHT_FINDER::create()
 }
 
 //セルデータ初期設定（リセット時にも呼び出される）
-void PAHT_FINDER::setCells(int* mapData, int sx, int sy, int gx, int gy)
+void PAHT_FINDER::setCells(int const* mapData, int sx, int sy, int gx, int gy, DIR* pathDir, int* pathDirLength)
 {
     DoneFlag = 0;
 
@@ -30,12 +30,11 @@ void PAHT_FINDER::setCells(int* mapData, int sx, int sy, int gx, int gy)
     Gy = gy;
     Sx = sx;
     Sy = sy;
-    Cells[Sx + Sy * Cols].Status = OPENED;
+    Cells[Sx + Sy * Cols].status = OPENED;
 
-    for (int i = 0; i < 100; i++) {
-        PathDir[i].x = 5;
-        PathDir[i].y = 5;
-    }
+    PathDir = pathDir;
+    PathDirLength = pathDirLength;
+    *PathDirLength = 0;
 
     DrawFlag = 1;
 }
@@ -44,7 +43,7 @@ void PAHT_FINDER::setRandomPos(int& x, int& y) {
     do {
         x = random() % Cols;
         y = random() % Rows;
-    } while (Cells[x + y * Cols].Status == OBSTACLE);
+    } while (Cells[x + y * Cols].status == OBSTACLE);
 }
 
 //ゴールまでの最短距離の２乗を求める
@@ -53,21 +52,45 @@ int PAHT_FINDER::huristic(int fromX, int fromY, int toX, int toY) {
     int x = toX - fromX;
     int y = toY - fromY;
     return x * x + y * y;
+    //return Abs(x) + Abs(y);//これだと効率が悪くなる
 }
 
-//ゴールから遡って、PAHTを設定していく（再帰呼び出し）
+//ゴールから親へ親へと戻りながらPathDirを決定していく（再帰呼び出し）
+//void PAHT_FINDER::traceRoute(int x, int y) {
+//    //スタートまで来たらreturn
+//    if (x == Sx && y == Sy) {
+//        return;
+//    }
+//
+//    //PathDirのインデックス
+//    int idx = Cells[x + y * Cols].cost - 1;
+//    //「自分から親への方向」を指すDirのインデックス
+//    int i = Cells[x + y * Cols].parentDirIdx;
+//    //「親から自分への方向」を「配列PathDirの後ろから前へ」並べていく
+//    PathDir[idx].x = -Dir[i].x;
+//    PathDir[idx].y = -Dir[i].y;
+//
+//    //親へ移動
+//    traceRoute(x + Dir[i].x, y + Dir[i].y);
+//}
+int j = 0;
 void PAHT_FINDER::traceRoute(int x, int y) {
+    //スタートまで来たらreturn
     if (x == Sx && y == Sy) {
         return;
     }
 
-    int idx = Cells[x + y * Cols].Cost - 1;
-    int i = Cells[x + y * Cols].ParentDirIdx;
-
-    PathDir[idx].x = -Dir[i].x;
-    PathDir[idx].y = -Dir[i].y;
-
+    //「自分から親への方向」を指すDirのインデックス
+    int i = Cells[x + y * Cols].parentDirIdx;
+    //親へ移動
     traceRoute(x + Dir[i].x, y + Dir[i].y);
+
+    //PathDirのインデックス
+    //int idx = Cells[x + y * Cols].cost - 1;
+    //「親から自分への方向」を「配列PathDirの後ろから前へ」並べていく
+    PathDir[Idx].x = -Dir[i].x;
+    PathDir[Idx].y = -Dir[i].y;
+    Idx++;
 }
 
 //ゴールまでのパス探索を１ステップのみ行う
@@ -77,50 +100,53 @@ int PAHT_FINDER::searchStep()
     if (DoneFlag)return 3;
 
     DrawFlag = 1;
-    //オープンセルの中でscoreが最小のセルを選ぶ
-    int minScore = 9999;
+    //オープンセルの中でscoreが最小であるセルのインデックスを決定
+    int minScore = INT_MAX;
     int minIdx = -1; //最小スコアセル
     for (int i = 0; i < Cols*Rows; i++) {
-        if (Cells[i].Status == OPENED) {
-            if (Cells[i].Score < minScore) {
-                minScore = Cells[i].Score;
+        if (Cells[i].status == OPENED) {
+            if (Cells[i].score < minScore) {
+                minScore = Cells[i].score;
                 minIdx = i;
             }
         }
     }
-    //オープンセルが無ければ通り道はないので終了
+    //オープンセルが見つからなければ、通り道はないので終了
     if (minIdx == -1) {
         return 2;
     }
     //最小セルがゴールなら終了
-    if (Cells[minIdx].Col == Gx && Cells[minIdx].Row == Gy) {
-        PathDirLength = Cells[minIdx].Cost;
+    if (Cells[minIdx].x == Gx && Cells[minIdx].y == Gy) {
+        *PathDirLength = Cells[minIdx].cost;
+        Idx = 0;
         traceRoute(Gx, Gy);
         DoneFlag = true;
         return 1;
     }
     //まず最小スコアのセルをクローズ状態にしてしまう
-    Cells[minIdx].Status = CLOSED;
-    //最小スコアのセルの周囲のセルのスコアを計算してオープンにする
-    int ncost = Cells[minIdx].Cost + 1;
+    Cells[minIdx].status = CLOSED;
+    //これからオープンするセルのコスト
+    int cost = Cells[minIdx].cost + 1;
     for (int i = 0; i < 4; i++) {
-        //隣接セルのインデックスneighborX,neighborY
-        int nx = Cells[minIdx].Col + Dir[i].x;
-        int ny = Cells[minIdx].Row + Dir[i].y;
-        //以下の場合はなにもしないで次の隣接セルの処理へ
+        //隣接セルのインデックスnx,ny(nはneighborの略）
+        int nx = Cells[minIdx].x + Dir[i].x;
+        int ny = Cells[minIdx].y + Dir[i].y;
+        //マップの外を指していたら、次の隣接セルの処理へ
         if (nx < 0) continue;
         if (ny < 0) continue;
         if (nx >= Cols) continue;
         if (ny >= Rows) continue;
+        //隣接セル名をncellとする
         CELL& ncell = Cells[nx + ny * Cols];
-        if (ncell.Status == OBSTACLE) continue;
-        if (ncell.Status == OPENED) continue;
-        //隣接セルのscoreを計算後、セルをオープン状態にする
-        if (ncell.Status == NO_CHECK) {
-            ncell.Cost = ncost;
-            ncell.Score = ncost + huristic(nx, ny, Gx, Gy);
-            ncell.Status = OPENED;
-            ncell.ParentDirIdx = (i + 2) % 4;//Dir[i]の逆ベクトルのインデックス
+        if (ncell.status == NO_CHECK) {
+            //隣接セルのscoreを計算
+            ncell.cost = cost;
+            ncell.heuristic = huristic(nx, ny, Gx, Gy);
+            ncell.score = cost + ncell.heuristic;
+            //オープンする
+            ncell.status = OPENED;
+            //親セル（このセルを開いたセル）への方向インデックス
+            ncell.parentDirIdx = (i + 2) % 4;//Dir[i]の逆ベクトルのインデックス
         }
     }
     return 0;
@@ -139,7 +165,7 @@ void PAHT_FINDER::drawPathLine()
 
     int sx = Sx * SideLen + SideLen / 2;
     int sy = Sy * SideLen + SideLen / 2;
-    for (int i = 0; i<PathDirLength; i++)
+    for (int i = 0; i<*PathDirLength; i++)
     {
         int ex = sx + PathDir[i].x * SideLen;
         int ey = sy + PathDir[i].y * SideLen;
@@ -156,8 +182,8 @@ void PAHT_FINDER::drawCells() {
     clear();
     //セル表示
     for (int i = 0; i < Cols*Rows; i++) {
-        //Cells[i].draw(SideLen);
-        Cells[i].drawMinimal(SideLen);
+        Cells[i].draw(SideLen);
+        //Cells[i].drawMinimal(SideLen);
     }
     //検索が終了したらパスラインを表示
     if (DoneFlag) {
@@ -169,6 +195,15 @@ void PAHT_FINDER::drawCells() {
     textMode(BCENTER);
     text("S", Sx * SideLen + SideLen / 2, Sy * SideLen + SideLen / 2);
     text("G", Gx * SideLen + SideLen / 2, Gy * SideLen + SideLen / 2);
+
+    printSize(20);
+    print("Wでリセット");
+    print("Dでステップ探索");
+    print("");
+    print("Aですべて探索");
+    print("Qでランダムリセット");
+
+    //print(*PathDirLength);
 
     DrawFlag = 0;
 }

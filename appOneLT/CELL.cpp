@@ -2,21 +2,22 @@
 #include"mathUtil.h"
 #include "CELL.h"
 
-void CELL::create(int col, int row)
+void CELL::create(int x, int y)
 {
-    Col = col;
-    Row = row;
+    this->x = x;
+    this->y = y;
 }
 
 void CELL::init(int mapData)
 {
     if (mapData == 1)
-        Status = OBSTACLE;
+        status = OBSTACLE;
     else
-        Status = NO_CHECK;
-    Cost = 0;
-    Score = 0;
-    ParentDirIdx = 0;
+        status = NO_CHECK;
+    cost = 0;
+    heuristic = 0;
+    score = 0;
+    parentDirIdx = 0;
 }
 
 void CELL::draw(int sideLen)
@@ -24,22 +25,25 @@ void CELL::draw(int sideLen)
     colorMode(HSV, 100);
     angleMode(DEGREES);
     float satu = 100; float value = 50;
-    if      (Status == NO_CHECK) fill(0, 0, 50);
-    else if (Status == OBSTACLE) fill(0, 0, 0);
-    else if (Status == CLOSED) fill(350, satu, value);
-    else if (Status == OPENED) fill(80, satu, value);
+    if      (status == NO_CHECK) fill(0, 0, 50);
+    else if (status == OBSTACLE) fill(0, 0, 0);
+    else if (status == CLOSED) fill(350, satu, value);
+    else if (status == OPENED) fill(80, satu, value);
     noStroke();
-    rect(sideLen * Col, sideLen * Row, sideLen - 1, sideLen - 1);
+    rect(sideLen * x, sideLen * y, sideLen - 1, sideLen - 1);
     //info
-    if (Status == OPENED)
+    if (status == OPENED)
     {
-        fill(0, 0, 100);
         textSize(sideLen / 3);
         textMode(BCENTER);
-        int px = sideLen * Col + sideLen / 5;
-        int py = sideLen * Row + sideLen / 2;
-        text(Cost, px, py - sideLen / 6);
-        text(Score, px, py + sideLen / 6);
+        int px = sideLen * x + sideLen / 5;
+        int py = sideLen * y + sideLen / 2;
+        fill(300, 100, 100);
+        text(cost, px, py - sideLen / 6);
+        fill(180, 100, 100);
+        text(heuristic, px+sideLen/2, py - sideLen / 6);
+        fill(60, 100, 100);
+        text(score, px+sideLen/4, py + sideLen / 5);
     }
 }
 
@@ -48,8 +52,8 @@ void CELL::drawMinimal(int sideLen)
 {
     colorMode(HSV, 100);
     angleMode(DEGREES);
-    if (Status == OBSTACLE) fill(0, 0, 0);
+    if (status == OBSTACLE) fill(0, 0, 0);
     else fill(0, 0, 50);
     noStroke();
-    rect(sideLen * Col, sideLen * Row, sideLen - 1, sideLen - 1);
+    rect(sideLen * x, sideLen * y, sideLen - 1, sideLen - 1);
 }

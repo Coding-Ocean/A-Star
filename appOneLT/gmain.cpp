@@ -5,9 +5,9 @@
 
 int MapData[100] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
-    1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
+    0, 1, 1, 1, 1, 1, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 1, 1, 1, 1, 1, 1, 1,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -16,25 +16,45 @@ int MapData[100] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 };
 
+void triangle(int sx, int sy, int gx, int gy) {
+    strokeWeight(3);
+    stroke(180, 100, 100);
+    line(100 * sx, 100 * sy, 100 * gx, 100 * gy);
+}
+
 void gmain()
 {
 	window(1000, 1000);
-    
+
     PAHT_FINDER path_finder;
     path_finder.create();
 
-    int sx=3, sy=1, gx=4, gy=8;
-    path_finder.setCells(MapData, sx, sy, gx, gy);
+    int sx=2, sy=1, gx=4, gy=8;
+    DIR pathDir[64];//要素数テキトーです
+    int pathDirLength = 0;
+    path_finder.setCells(MapData, sx, sy, gx, gy, pathDir, &pathDirLength);
     
     while (notQuit)
 	{
-        if (isTrigger(KEY_W)) {
+        if (isTrigger(KEY_Q)) {
             path_finder.setRandomPos(sx, sy);
             path_finder.setRandomPos(gx, gy);
-            path_finder.setCells(MapData, sx, sy, gx, gy);
+            path_finder.setCells(MapData, sx, sy, gx, gy, pathDir, &pathDirLength);
         }
+        if (isTrigger(KEY_E)) {
+            sx = 2; sy = 1; gx = 4; gy = 8;
+            path_finder.setCells(MapData, sx, sy, gx, gy, pathDir, &pathDirLength);
+        }
+
         if (isTrigger(KEY_A))path_finder.searchLoop();
         if (isTrigger(KEY_D))path_finder.searchStep();
         path_finder.drawCells();
+
+        static int sw = 0;
+        if (isTrigger(KEY_L))++sw %= 5;
+        if (sw == 1)triangle(sx - 1, sy, gx, gy);
+        if (sw == 2)triangle(sx, sy - 1, gx, gy);
+        if (sw == 3)triangle(sx + 1, sy, gx, gy);
+        if (sw == 4)triangle(sx, sy + 1, gx, gy);
 	}
 }
