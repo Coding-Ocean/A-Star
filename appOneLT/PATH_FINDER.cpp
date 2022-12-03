@@ -1,27 +1,46 @@
+#include<vector>
 #include"libOne.h"
 #include"CELL.h"
 #include"PATH_FINDER.h"
 
-void PAHT_FINDER::create()
+extern DIR Dir[4] = {
+    {0,-1},{1,0},{0,1},{-1,0}//上右下左
+};
+
+PATH_FINDER::~PATH_FINDER()
 {
-    //セルマトリックスをつくる
-    Cells = new CELL[Cols*Rows];
-    for (int c = 0; c < Cols; c++) {
-        for (int r = 0; r < Rows; r++) {
-            Cells[c + r * Cols].create(c, r);
+    SAFE_DELETE_ARRAY(Cells); 
+}
+
+void PATH_FINDER::create(int cols, int rows)
+{
+    //セル配列をつくる
+    Cols = cols;
+    Rows = rows;
+    NumCells = Cols * Rows;
+    Cells = new CELL[NumCells];
+    for (int x = 0; x < Cols; x++) {
+        for (int y = 0; y < Rows; y++) {
+            Cells[x + y * Cols].create(x, y);
         }
     }
     SideLen = height / Rows;
 }
 
+void PATH_FINDER::destroy()
+{
+    SAFE_DELETE_ARRAY(Cells);
+}
+
 //セルデータ初期設定（リセット時にも呼び出される）
-void PAHT_FINDER::setCells(int const* mapData, int sx, int sy, int gx, int gy, DIR* pathDir, int* pathDirLength)
+void PATH_FINDER::init(int const* mapData, int sx, int sy, int gx, int gy, 
+    std::vector<int>* pathDirIdxs)
 {
     DoneFlag = 0;
 
-    for (int c = 0; c < Cols; c++) {
-        for (int r = 0; r < Rows; r++) {
-            int i = c + r * Cols;
+    for (int x = 0; x < Cols; x++) {
+        for (int y = 0; y < Rows; y++) {
+            int i = x + y * Cols;
             Cells[i].init(mapData[i]);
         }
     }
@@ -32,14 +51,12 @@ void PAHT_FINDER::setCells(int const* mapData, int sx, int sy, int gx, int gy, D
     Sy = sy;
     Cells[Sx + Sy * Cols].status = OPENED;
 
-    PathDir = pathDir;
-    PathDirLength = pathDirLength;
-    *PathDirLength = 0;
+    PathDirIdxs = pathDirIdxs;
 
     DrawFlag = 1;
 }
 
-void PAHT_FINDER::setRandomPos(int& x, int& y) {
+void PATH_FINDER::setRandomPos(int& x, int& y) {
     do {
         x = random() % Cols;
         y = random() % Rows;
@@ -48,33 +65,13 @@ void PAHT_FINDER::setRandomPos(int& x, int& y) {
 
 //ゴールまでの最短距離の２乗を求める
 //（この予測コストのことをヒューリスティックと呼ぶ）
-int PAHT_FINDER::huristic(int fromX, int fromY, int toX, int toY) {
+int PATH_FINDER::huristic(int fromX, int fromY, int toX, int toY) {
     int x = toX - fromX;
     int y = toY - fromY;
     return x * x + y * y;
-    //return Abs(x) + Abs(y);//これだと効率が悪くなる
 }
 
-//ゴールから親へ親へと戻りながらPathDirを決定していく（再帰呼び出し）
-//void PAHT_FINDER::traceRoute(int x, int y) {
-//    //スタートまで来たらreturn
-//    if (x == Sx && y == Sy) {
-//        return;
-//    }
-//
-//    //PathDirのインデックス
-//    int idx = Cells[x + y * Cols].cost - 1;
-//    //「自分から親への方向」を指すDirのインデックス
-//    int i = Cells[x + y * Cols].parentDirIdx;
-//    //「親から自分への方向」を「配列PathDirの後ろから前へ」並べていく
-//    PathDir[idx].x = -Dir[i].x;
-//    PathDir[idx].y = -Dir[i].y;
-//
-//    //親へ移動
-//    traceRoute(x + Dir[i].x, y + Dir[i].y);
-//}
-int j = 0;
-void PAHT_FINDER::traceRoute(int x, int y) {
+void PATH_FINDER::traceRoute(int x, int y) {
     //スタートまで来たらreturn
     if (x == Sx && y == Sy) {
         return;
@@ -85,17 +82,13 @@ void PAHT_FINDER::traceRoute(int x, int y) {
     //親へ移動
     traceRoute(x + Dir[i].x, y + Dir[i].y);
 
-    //PathDirのインデックス
-    //int idx = Cells[x + y * Cols].cost - 1;
-    //「親から自分への方向」を「配列PathDirの後ろから前へ」並べていく
-    PathDir[Idx].x = -Dir[i].x;
-    PathDir[Idx].y = -Dir[i].y;
-    Idx++;
+    //「自分から親への"逆方向インデックス"」を「配列PathDirIdxsへ」並べていく
+    (*PathDirIdxs).push_back( (i + 2) % 4 );
 }
 
 //ゴールまでのパス探索を１ステップのみ行う
 //これが所謂エイスターアルゴリズムの心臓部
-int PAHT_FINDER::searchStep()
+int PATH_FINDER::searchStep()
 {
     if (DoneFlag)return 3;
 
@@ -103,7 +96,7 @@ int PAHT_FINDER::searchStep()
     //オープンセルの中でscoreが最小であるセルのインデックスを決定
     int minScore = INT_MAX;
     int minIdx = -1; //最小スコアセル
-    for (int i = 0; i < Cols*Rows; i++) {
+    for (int i = 0; i < NumCells; i++) {
         if (Cells[i].status == OPENED) {
             if (Cells[i].score < minScore) {
                 minScore = Cells[i].score;
@@ -117,8 +110,7 @@ int PAHT_FINDER::searchStep()
     }
     //最小セルがゴールなら終了
     if (Cells[minIdx].x == Gx && Cells[minIdx].y == Gy) {
-        *PathDirLength = Cells[minIdx].cost;
-        Idx = 0;
+        (*PathDirIdxs).clear();
         traceRoute(Gx, Gy);
         DoneFlag = true;
         return 1;
@@ -153,37 +145,47 @@ int PAHT_FINDER::searchStep()
 }
 
 //ゴールまでのパスを探す
-void PAHT_FINDER::searchLoop() {
+void PATH_FINDER::searchLoop() {
     if (DoneFlag)return;
     while (searchStep() == 0);
 }
 
-void PAHT_FINDER::drawPathLine()
+void PATH_FINDER::drawPathLine()
 {
     strokeWeight(5);
     stroke(330, 80, 100);
 
     int sx = Sx * SideLen + SideLen / 2;
     int sy = Sy * SideLen + SideLen / 2;
-    for (int i = 0; i<*PathDirLength; i++)
+    for (int i : *PathDirIdxs)
     {
-        int ex = sx + PathDir[i].x * SideLen;
-        int ey = sy + PathDir[i].y * SideLen;
+        int ex = sx + Dir[i].x * SideLen;
+        int ey = sy + Dir[i].y * SideLen;
         arrow(sx, sy, ex, ey);
         sx = ex;
         sy = ey;
     }
 }
 
-void PAHT_FINDER::drawCells() {
+void PATH_FINDER::drawCells() {
+    if (isTrigger(KEY_SPACE)) {
+        DrawSw = 1 - DrawSw;
+        DrawFlag = 1;
+    }
     if (!DrawFlag)
         return;
     
     clear();
     //セル表示
-    for (int i = 0; i < Cols*Rows; i++) {
-        Cells[i].draw(SideLen);
-        //Cells[i].drawMinimal(SideLen);
+    if (DrawSw) {
+        for (int i = 0; i < NumCells; i++) {
+            Cells[i].draw(SideLen);
+        }
+    }
+    else {
+        for (int i = 0; i < NumCells; i++) {
+            Cells[i].drawMinimal(SideLen);
+        }
     }
     //検索が終了したらパスラインを表示
     if (DoneFlag) {
@@ -203,7 +205,7 @@ void PAHT_FINDER::drawCells() {
     print("Aですべて探索");
     print("Qでランダムリセット");
 
-    //print(*PathDirLength);
+    //print((*PathDirIdxs).size());
 
     DrawFlag = 0;
 }

@@ -2,35 +2,17 @@
 struct DIR {
     int x, y;
 };
+extern DIR Dir[4];
 
-class PAHT_FINDER
+class PATH_FINDER
 {
-private:
-    DIR Dir[4] = {
-        {0,-1},{1,0},{0,1},{-1,0}//上右下左
-    };
-
-    class CELL* Cells = 0;
-    int Cols = 10;
-    int Rows = 10;
-    int SideLen = 50;
-
-    int Sx = 0; //スタートセル
-    int Sy = 0;
-    int Gx = 0; //ゴールセル
-    int Gy = 0;
-
-    DIR* PathDir;
-    int* PathDirLength;
-    int Idx;
-
-    int DoneFlag=0;
-    int DrawFlag=1;
-
 public:
-    void create();
+    ~PATH_FINDER();
+    void create(int cols, int rows);
+    void destroy();
     //セルデータ初期設定（リセット時にも呼び出される）
-    void setCells(int const* mapData, int sx, int sy, int gx, int gy, DIR* pathDir, int *pathDirLength);
+    void init(int const* mapData, int sx, int sy, int gx, int gy, 
+        std::vector<int>* pathDirIdxs);
     void setRandomPos(int& x, int& y);
     //ゴールまでのパスを探す
     void searchLoop();
@@ -46,5 +28,24 @@ public:
     void drawPathLine();
     //セルを表示する
     void drawCells();
+private:
+
+    class CELL* Cells = nullptr;
+    int NumCells = 0;
+    int Cols = 0;
+    int Rows = 0;
+    int SideLen = 0;
+
+    int Sx = 0; //スタートセル
+    int Sy = 0;
+    int Gx = 0; //ゴールセル
+    int Gy = 0;
+
+    std::vector<int>* PathDirIdxs=nullptr;
+
+    int DoneFlag = 0;
+    int DrawFlag = 1;
+    int DrawSw = 1;
+
 };
 

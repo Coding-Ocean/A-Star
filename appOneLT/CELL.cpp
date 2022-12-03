@@ -47,7 +47,6 @@ void CELL::draw(int sideLen)
     }
 }
 
-
 void CELL::drawMinimal(int sideLen)
 {
     colorMode(HSV, 100);
