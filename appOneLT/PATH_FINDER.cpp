@@ -26,7 +26,8 @@ void PATH_FINDER::create(int* mapData, int cols, int rows)
     Cells = new CELL[NumCells];
     for (int x = 0; x < Cols; x++) {
         for (int y = 0; y < Rows; y++) {
-            Cells[x + y * Cols].create(x, y);
+            Cells[x + y * Cols].x = x;
+            Cells[x + y * Cols].y = y;
         }
     }
     SideLen = height / Rows;
@@ -46,7 +47,14 @@ void PATH_FINDER::init(int sx, int sy, int gx, int gy,
     for (int x = 0; x < Cols; x++) {
         for (int y = 0; y < Rows; y++) {
             int i = x + y * Cols;
-            Cells[i].init(MapData[i]);
+            if (MapData[i] == 1)
+                Cells[i].status = OBSTACLE;
+            else
+                Cells[i].status = NO_CHECK;
+            Cells[i].cost = 0;
+            Cells[i].heuristic = 0;
+            Cells[i].score = 0;
+            Cells[i].parentDirIdx = 0;
         }
     }
 

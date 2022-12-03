@@ -3,7 +3,7 @@ const int NO_CHECK = 0;
 const int OPENED = 1;
 const int CLOSED = 2;
 const int OBSTACLE = 3;
-class CELL {
+struct CELL {
 public:
     int x;
     int y;
@@ -13,8 +13,6 @@ public:
     int score;
     int parentDirIdx;
 
-    void create(int x, int y);
-    void init(int mapData);
     void draw(int sideLen);
     void drawMinimal(int sideLen);
 };

@@ -2,24 +2,6 @@
 #include"mathUtil.h"
 #include "CELL.h"
 
-void CELL::create(int x, int y)
-{
-    this->x = x;
-    this->y = y;
-}
-
-void CELL::init(int mapData)
-{
-    if (mapData == 1)
-        status = OBSTACLE;
-    else
-        status = NO_CHECK;
-    cost = 0;
-    heuristic = 0;
-    score = 0;
-    parentDirIdx = 0;
-}
-
 void CELL::draw(int sideLen)
 {
     colorMode(HSV, 100);

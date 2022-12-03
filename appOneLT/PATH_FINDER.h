@@ -32,7 +32,7 @@ public:
     void setRandomPos(int& x, int& y);
 private:
     int* MapData = nullptr;
-    class CELL* Cells = nullptr;
+    struct CELL* Cells = nullptr;
     int NumCells = 0;
     int Cols = 0;
     int Rows = 0;
