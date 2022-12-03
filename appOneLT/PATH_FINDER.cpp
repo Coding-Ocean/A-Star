@@ -7,13 +7,18 @@ extern DIR Dir[4] = {
     {0,-1},{1,0},{0,1},{-1,0}//上右下左
 };
 
+PATH_FINDER::PATH_FINDER()
+{
+}
+
 PATH_FINDER::~PATH_FINDER()
 {
     SAFE_DELETE_ARRAY(Cells); 
 }
 
-void PATH_FINDER::create(int cols, int rows)
+void PATH_FINDER::create(int* mapData, int cols, int rows)
 {
+    MapData = mapData;
     //セル配列をつくる
     Cols = cols;
     Rows = rows;
@@ -33,7 +38,7 @@ void PATH_FINDER::destroy()
 }
 
 //セルデータ初期設定（リセット時にも呼び出される）
-void PATH_FINDER::init(int const* mapData, int sx, int sy, int gx, int gy, 
+void PATH_FINDER::init(int sx, int sy, int gx, int gy, 
     std::vector<int>* pathDirIdxs)
 {
     DoneFlag = 0;
@@ -41,7 +46,7 @@ void PATH_FINDER::init(int const* mapData, int sx, int sy, int gx, int gy,
     for (int x = 0; x < Cols; x++) {
         for (int y = 0; y < Rows; y++) {
             int i = x + y * Cols;
-            Cells[i].init(mapData[i]);
+            Cells[i].init(MapData[i]);
         }
     }
 
@@ -145,7 +150,7 @@ int PATH_FINDER::searchStep()
 }
 
 //ゴールまでのパスを探す
-void PATH_FINDER::searchLoop() {
+void PATH_FINDER::search() {
     if (DoneFlag)return;
     while (searchStep() == 0);
 }

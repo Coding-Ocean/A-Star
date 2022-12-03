@@ -7,15 +7,15 @@ extern DIR Dir[4];
 class PATH_FINDER
 {
 public:
+    PATH_FINDER();
     ~PATH_FINDER();
-    void create(int cols, int rows);
+    void create(int* mapData, int cols, int rows);
     void destroy();
     //セルデータ初期設定（リセット時にも呼び出される）
-    void init(int const* mapData, int sx, int sy, int gx, int gy, 
+    void init(int sx, int sy, int gx, int gy, 
         std::vector<int>* pathDirIdxs);
-    void setRandomPos(int& x, int& y);
     //ゴールまでのパスを探す
-    void searchLoop();
+    void search();
     //ゴールまでのパス探索を１ステップのみ行う
     //これが所謂エイスターアルゴリズムの心臓部
     int searchStep();
@@ -28,8 +28,10 @@ public:
     void drawPathLine();
     //セルを表示する
     void drawCells();
+    //デモ用。スタートとゴールを求める
+    void setRandomPos(int& x, int& y);
 private:
-
+    int* MapData = nullptr;
     class CELL* Cells = nullptr;
     int NumCells = 0;
     int Cols = 0;
